@@ -1,0 +1,5 @@
+.gitattributes
+.gradle
+.idea
+build
+gradle
