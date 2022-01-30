@@ -1,6 +1,11 @@
 package j2dgameengine;
 
-import util.Time;
+import j2dgameengine.listeners.KeyListener;
+import j2dgameengine.listeners.MouseListener;
+import j2dgameengine.scene.LevelEditorScene;
+import j2dgameengine.scene.LevelScene;
+import j2dgameengine.scene.Scene;
+import j2dgameengine.util.Time;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
@@ -16,6 +21,7 @@ public class Window
 	private String title;
 
 	private static Window window;
+	private static ImGuiLayer imGuiLayer;
 
 	private long glfwWindow;
 
@@ -26,30 +32,31 @@ public class Window
 	private Window()
 	{
 		this.width = 720;
-		this.height = 480;
+		this.height = 360;
 		this.title = "Mario";
-		r = g = b = a = 1;
+		r = g = b = 1;
+		a = 1;
 	}
 
 	public static void changeScene(int newScene)
 	{
 		switch (newScene)
 		{
-			case 0 ->
-			{
-				currentScene = new LevelEditorScene();
-				currentScene.init();
-			}
-			case 1 ->
-			{
-				currentScene = new LevelScene();
-				currentScene.init();
-			}
+			case 0 -> currentScene = new LevelEditorScene();
+			case 1 -> currentScene = new LevelScene();
 			default ->
 			{
 				assert false : "Unknown scene '" + newScene + "'";
 			}
 		}
+
+		currentScene.init();
+		currentScene.start();
+	}
+
+	public static Scene getCurrentScene()
+	{
+		return currentScene;
 	}
 
 	public static Window getInstance()
@@ -100,13 +107,17 @@ public class Window
 			throw new IllegalStateException("Failed to create the GLFW window");
 		}
 
-		// Set mouse callbacks
 		glfwSetCursorPosCallback(glfwWindow, MouseListener::mousePosCallback);
 		glfwSetMouseButtonCallback(glfwWindow, MouseListener::mouseButtonCallback);
 		glfwSetScrollCallback(glfwWindow, MouseListener::mouseScrollCallback);
-
-		// Set keyboard callbacks
 		glfwSetKeyCallback(glfwWindow, KeyListener::keyCallback);
+		glfwSetWindowSizeCallback(glfwWindow, (w, newWidth, newHeight) ->
+		{
+			System.out.println("Window resized " + newWidth + " " + newHeight);
+			setWidth(newWidth);
+			setHeight(newHeight);
+			currentScene.getCamera().adjustProjection();
+		});
 
 		// Make the OpenGL context current
 		glfwMakeContextCurrent(glfwWindow);
@@ -123,6 +134,12 @@ public class Window
 		// bindings available for use.
 		GL.createCapabilities();
 
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
+		imGuiLayer = new ImGuiLayer(glfwWindow);
+		imGuiLayer.init();
+
 		changeScene(0);
 	}
 
@@ -130,7 +147,7 @@ public class Window
 	{
 		float beginTime = Time.getTime();
 		float endTime;
-		float deltaTime = -1.0f;
+		float dt = -1.0f;
 
 		while(!glfwWindowShouldClose(glfwWindow))
 		{
@@ -140,13 +157,43 @@ public class Window
 			glClearColor(r, g, b, a);
 			glClear(GL_COLOR_BUFFER_BIT);
 
-			if(deltaTime >= 0) currentScene.update(deltaTime);
+			if(dt >= 0) currentScene.update(dt);
 
+			imGuiLayer.update(dt, currentScene);
 			glfwSwapBuffers(glfwWindow);
 
 			endTime = Time.getTime();
-			deltaTime = endTime - beginTime;
+			dt = endTime - beginTime;
 			beginTime = endTime;
 		}
+	}
+
+	public static void setWidth(int width)
+	{
+		getInstance().width = width;
+	}
+
+	public static void setHeight(int height)
+	{
+		getInstance().height = height;
+	}
+
+	private static int[] getWindowSize()
+	{
+		int[] w = new int[1];
+		int[] h = new int[1];
+		glfwGetWindowSize(getInstance().glfwWindow, w, h);
+
+		return new int[] { w[0], h[0] };
+	}
+
+	public static int getWidth()
+	{
+		return getWindowSize()[0];
+	}
+
+	public static int getHeight()
+	{
+		return getWindowSize()[1];
 	}
 }

@@ -1,4 +1,4 @@
-package j2dgameengine;
+package j2dgameengine.scene;
 
 public class LevelScene extends Scene
 {
@@ -7,7 +7,7 @@ public class LevelScene extends Scene
 	}
 
 	@Override
-	public void update(float deltaTime)
+	public void update(float dt)
 	{
 
 	}
