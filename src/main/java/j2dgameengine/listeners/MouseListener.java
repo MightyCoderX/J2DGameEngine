@@ -1,5 +1,8 @@
 package j2dgameengine.listeners;
 
+import j2dgameengine.Window;
+import org.joml.Vector4f;
+
 import static org.lwjgl.glfw.GLFW.GLFW_PRESS;
 import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
 
@@ -9,7 +12,7 @@ public class MouseListener
 
 	double scrollX, scrollY;
 	double xPos, yPos, lastX, lastY;
-	private final boolean[] mouseButtonPressed = new boolean[5];
+	private final boolean[] mouseButtonPressed = new boolean[9];
 	private boolean isDragging;
 
 	private MouseListener()
@@ -76,14 +79,36 @@ public class MouseListener
 		getInstance().lastY = getInstance().yPos;
 	}
 
-	public static double getX()
+	public static float getX()
 	{
-		return getInstance().xPos;
+		return (float) getInstance().xPos;
 	}
 
-	public static double getY()
+	public static float getY()
 	{
-		return getInstance().yPos;
+		return (float) getInstance().yPos;
+	}
+
+	public static float getWorldX()
+	{
+		float currentX = getX();
+		currentX = (currentX / (float) Window.getWidth()) * 2 - 1;
+		Vector4f tmp = new Vector4f(currentX, 0, 0, 1);
+		tmp.mul(Window.getCurrentScene().getCamera().getInverseProjection())
+				.mul(Window.getCurrentScene().getCamera().getInverseView());
+
+		return tmp.x;
+	}
+
+	public static float getWorldY()
+	{
+		float currentY = Window.getHeight() - getY();
+		currentY = (currentY / (float) Window.getHeight()) * 2 - 1;
+		Vector4f tmp = new Vector4f(0, currentY, 0, 1);
+		tmp.mul(Window.getCurrentScene().getCamera().getInverseProjection())
+				.mul(Window.getCurrentScene().getCamera().getInverseView());
+
+		return tmp.y;
 	}
 
 	public static double getDx()

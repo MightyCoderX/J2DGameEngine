@@ -2,9 +2,9 @@ package j2dgameengine;
 
 import j2dgameengine.listeners.KeyListener;
 import j2dgameengine.listeners.MouseListener;
-import j2dgameengine.scene.LevelEditorScene;
-import j2dgameengine.scene.LevelScene;
-import j2dgameengine.scene.Scene;
+import j2dgameengine.renderer.DebugDraw;
+import scenes.LevelEditorScene;
+import scenes.LevelScene;
 import j2dgameengine.util.Time;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFWErrorCallback;
@@ -50,6 +50,7 @@ public class Window
 			}
 		}
 
+		currentScene.load();
 		currentScene.init();
 		currentScene.start();
 	}
@@ -154,10 +155,16 @@ public class Window
 			// Poll events
 			glfwPollEvents();
 
+			DebugDraw.beginFrame();
+
 			glClearColor(r, g, b, a);
 			glClear(GL_COLOR_BUFFER_BIT);
 
-			if(dt >= 0) currentScene.update(dt);
+			if(dt >= 0)
+			{
+				currentScene.update(dt);
+				DebugDraw.draw();
+			}
 
 			imGuiLayer.update(dt, currentScene);
 			glfwSwapBuffers(glfwWindow);
@@ -166,6 +173,7 @@ public class Window
 			dt = endTime - beginTime;
 			beginTime = endTime;
 		}
+		currentScene.saveExit();
 	}
 
 	public static void setWidth(int width)

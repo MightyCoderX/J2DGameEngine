@@ -8,7 +8,8 @@ import imgui.enums.ImGuiConfigFlags;
 import imgui.enums.ImGuiKey;
 import imgui.enums.ImGuiMouseCursor;
 import imgui.gl3.ImGuiImplGl3;
-import j2dgameengine.scene.Scene;
+import j2dgameengine.listeners.KeyListener;
+import j2dgameengine.listeners.MouseListener;
 
 import static org.lwjgl.glfw.GLFW.*;
 
@@ -17,6 +18,8 @@ public class ImGuiLayer
 	private long glfwWindow;
 	private final long[] mouseCursors = new long[ImGuiMouseCursor.COUNT];
 	private final ImGuiImplGl3 imGuiGl3 = new ImGuiImplGl3();
+
+	private final int FONT_SIZE = 18;
 
 	public ImGuiLayer(long glfwWindow)
 	{
@@ -92,6 +95,11 @@ public class ImGuiLayer
 			io.setKeyShift(io.getKeysDown(GLFW_KEY_LEFT_SHIFT) || io.getKeysDown(GLFW_KEY_RIGHT_SHIFT));
 			io.setKeyAlt(io.getKeysDown(GLFW_KEY_LEFT_ALT) || io.getKeysDown(GLFW_KEY_RIGHT_ALT));
 			io.setKeySuper(io.getKeysDown(GLFW_KEY_LEFT_SUPER) || io.getKeysDown(GLFW_KEY_RIGHT_SUPER));
+
+			if(!io.getWantCaptureMouse())
+			{
+				KeyListener.keyCallback(w, key, scancode, action, mods);
+			}
 		});
 
 		glfwSetCharCallback(glfwWindow, (w, c) ->
@@ -116,6 +124,11 @@ public class ImGuiLayer
 			if (!io.getWantCaptureMouse() && mouseDown[1])
 			{
 				ImGui.setWindowFocus(null);
+			}
+
+			if(!io.getWantCaptureMouse())
+			{
+				MouseListener.mouseButtonCallback(w, button, action, mods);
 			}
 		});
 
@@ -166,7 +179,7 @@ public class ImGuiLayer
 
 		// Fonts merge example
 		fontConfig.setPixelSnapH(true);
-		fontAtlas.addFontFromFileTTF("assets/fonts/segoeui.ttf", 20, fontConfig);
+		fontAtlas.addFontFromFileTTF("assets/fonts/segoeui.ttf", FONT_SIZE, fontConfig);
 
 		fontConfig.destroy(); // After all fonts were added we don't need this config more
 

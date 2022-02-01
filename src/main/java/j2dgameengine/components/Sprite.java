@@ -5,8 +5,9 @@ import j2dgameengine.renderer.Texture;
 
 public class Sprite
 {
-	private Texture texture;
+	private float width, height;
 
+	private Texture texture;
 	private Vector2f[] texCoords;
 
 	public Sprite(Texture texture, Vector2f[] texCoords)
@@ -25,6 +26,37 @@ public class Sprite
 		});
 	}
 
+	public Sprite()
+	{
+		this(null);
+	}
+
+	public float getWidth()
+	{
+		return width;
+	}
+
+	public void setSize(float width, float height)
+	{
+		this.width = width;
+		this.height = height;
+	}
+
+	public void setWidth(float width)
+	{
+		this.width = width;
+	}
+
+	public float getHeight()
+	{
+		return height;
+	}
+
+	public void setHeight(float height)
+	{
+		this.height = height;
+	}
+
 	public Texture getTexture()
 	{
 		return texture;
@@ -33,5 +65,20 @@ public class Sprite
 	public Vector2f[] getTexCoords()
 	{
 		return texCoords;
+	}
+
+	public void setTexture(Texture texture)
+	{
+		this.texture = texture;
+	}
+
+	public void setTexCoords(Vector2f[] texCoords)
+	{
+		this.texCoords = texCoords;
+	}
+
+	public int getTexID()
+	{
+		return texture == null ? -1 : texture.getId();
 	}
 }

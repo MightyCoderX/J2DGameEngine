@@ -1,4 +1,6 @@
-package j2dgameengine.scene;
+package scenes;
+
+import j2dgameengine.Scene;
 
 public class LevelScene extends Scene
 {

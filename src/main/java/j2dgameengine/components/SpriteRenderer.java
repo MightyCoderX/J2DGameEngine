@@ -1,7 +1,6 @@
 package j2dgameengine.components;
 
 import imgui.ImGui;
-import j2dgameengine.Component;
 import j2dgameengine.Transform;
 import org.joml.Vector2f;
 import org.joml.Vector4f;
@@ -12,8 +11,15 @@ public class SpriteRenderer extends Component
 	private Sprite sprite;
 	private Vector4f color;
 
-	private Transform lastTransform;
-	boolean isDirty = false;
+	private transient Transform lastTransform;
+	private transient boolean isDirty = false;
+
+	public SpriteRenderer()
+	{
+		this.sprite = new Sprite();
+		this.color = new Vector4f(1);
+		this.isDirty = true;
+	}
 
 	public SpriteRenderer(Vector4f color)
 	{
@@ -84,6 +90,15 @@ public class SpriteRenderer extends Component
 
 	public void setColor(Vector4f color)
 	{
+		if(this.color.equals(color)) return;
+
+		this.color.set(color);
+		this.isDirty = true;
+	}
+
+	public void setColor(float r, float g, float b, float a)
+	{
+		Vector4f color = new Vector4f(r, g, b, a);
 		if(this.color.equals(color)) return;
 
 		this.color.set(color);

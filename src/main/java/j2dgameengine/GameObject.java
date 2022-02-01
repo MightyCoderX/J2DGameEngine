@@ -1,10 +1,15 @@
 package j2dgameengine;
 
+import j2dgameengine.components.Component;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class GameObject
 {
+	private static int ID_COUNTER = 0;
+	private int uid = -1;
+
 	private String name;
 	public Transform transform;
 	private List<Component> components;
@@ -16,6 +21,8 @@ public class GameObject
 		this.transform = transform;
 		this.components = new ArrayList<>();
 		this.zIndex = zIndex;
+
+		this.uid = ID_COUNTER++;
 	}
 
 	public GameObject(String name, Transform transform)
@@ -30,6 +37,7 @@ public class GameObject
 
 	public void addComponent(Component c)
 	{
+		c.generateId();
 		components.add(c);
 		c.gameObject = this;
 	}
@@ -56,6 +64,11 @@ public class GameObject
 			components.remove(i);
 			return;
 		}
+	}
+
+	public List<Component> getComponents()
+	{
+		return components;
 	}
 
 	public void update(float dt)
@@ -85,5 +98,15 @@ public class GameObject
 	public int zIndex()
 	{
 		return zIndex;
+	}
+
+	public int getUid()
+	{
+		return uid;
+	}
+
+	public static void init(int maxId)
+	{
+		ID_COUNTER = maxId;
 	}
 }

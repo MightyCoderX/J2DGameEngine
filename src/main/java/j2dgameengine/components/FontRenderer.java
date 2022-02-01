@@ -1,7 +1,5 @@
 package j2dgameengine.components;
 
-import j2dgameengine.Component;
-
 public class FontRenderer extends Component
 {
 	@Override
