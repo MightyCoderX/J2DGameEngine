@@ -3,6 +3,8 @@ package j2dgameengine.components;
 import j2dgameengine.GameObject;
 import j2dgameengine.Window;
 import j2dgameengine.listeners.MouseListener;
+import j2dgameengine.util.Settings;
+import org.joml.Vector2f;
 
 import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT;
 
@@ -13,7 +15,7 @@ public class MouseControls extends Component
 	public void pickupObject(GameObject go)
 	{
 		this.holdingObject = go;
-		Window.getCurrentScene().addGameObjectToScene(go);
+		Window.getScene().addGameObjectToScene(go);
 	}
 
 	void place()
@@ -22,12 +24,20 @@ public class MouseControls extends Component
 	}
 
 	@Override
-	public void update(float dt)
+	public void editorUpdate(float dt)
 	{
 		if(holdingObject == null) return;
 
-		holdingObject.transform.position
-				.set(MouseListener.getWorldX() - 16, MouseListener.getWorldY() - 16);
+		Vector2f position = holdingObject.transform.position;
+
+		System.out.println("MouseListener -> WorldPos (" + MouseListener.getWorldX() + ", " + MouseListener.getWorldY() + ")");
+
+		position.set(MouseListener.getWorldPos());
+
+		position.set(
+			((int)Math.floor(position.x / Settings.GRID_COLUMN_WIDTH) * Settings.GRID_COLUMN_WIDTH) + Settings.GRID_COLUMN_WIDTH / 2.0f,
+			((int)Math.floor(position.y / Settings.GRID_ROW_HEIGHT) * Settings.GRID_ROW_HEIGHT) + Settings.GRID_ROW_HEIGHT / 2.0f
+		);
 
 		if(MouseListener.mouseButtonDown(GLFW_MOUSE_BUTTON_LEFT))
 		{

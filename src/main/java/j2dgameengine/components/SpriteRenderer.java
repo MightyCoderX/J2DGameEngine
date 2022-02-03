@@ -1,7 +1,7 @@
 package j2dgameengine.components;
 
 import imgui.ImGui;
-import j2dgameengine.Transform;
+import j2dgameengine.editor.JImGui;
 import org.joml.Vector2f;
 import org.joml.Vector4f;
 import j2dgameengine.renderer.Texture;
@@ -57,13 +57,21 @@ public class SpriteRenderer extends Component
 	}
 
 	@Override
+	public void editorUpdate(float dt)
+	{
+		if(!lastTransform.equals(gameObject.transform))
+		{
+			gameObject.transform.copy(lastTransform);
+			isDirty = true;
+		}
+	}
+
+	@Override
 	public void imGui()
 	{
-		float[] imColor = {color.x, color.y, color.z, color.w};
-		if(ImGui.colorPicker4("Color picker", imColor))
+		if(JImGui.colorPicker4("Color Picker", this.color))
 		{
-			color.set(imColor[0], imColor[1], imColor[2], imColor[3]);
-			isDirty = true;
+			this.isDirty = true;
 		}
 	}
 
@@ -75,6 +83,11 @@ public class SpriteRenderer extends Component
 	public Texture getTexture()
 	{
 		return sprite.getTexture();
+	}
+
+	public void setTexture(Texture texture)
+	{
+		this.sprite.setTexture(texture);
 	}
 
 	public Vector2f[] getTexCoords()
@@ -108,6 +121,11 @@ public class SpriteRenderer extends Component
 	public boolean isDirty()
 	{
 		return isDirty;
+	}
+
+	public void setDirty()
+	{
+		isDirty = true;
 	}
 
 	public void setClean()

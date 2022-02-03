@@ -11,6 +11,7 @@ public class Renderer
 {
 	private final int MAX_BATCH_SIZE = 1000;
 	private List<RenderBatch> batches;
+	private static Shader currentShader;
 
 	public Renderer()
 	{
@@ -32,7 +33,7 @@ public class Renderer
 
 		for(RenderBatch batch : batches)
 		{
-			if(batch.isFull() && batch.zIndex() != sprite.gameObject.zIndex()) continue;
+			if(batch.isFull() && batch.zIndex() != sprite.gameObject.transform.zIndex) continue;
 
 			Texture texture = sprite.getTexture();
 			if(texture == null || !batch.hasTexture(texture) || !batch.hasTextureRoom()) continue;
@@ -44,7 +45,7 @@ public class Renderer
 
 		if(!added)
 		{
-			RenderBatch newBatch = new RenderBatch(MAX_BATCH_SIZE, sprite.gameObject.zIndex());
+			RenderBatch newBatch = new RenderBatch(MAX_BATCH_SIZE, sprite.gameObject.transform.zIndex);
 			newBatch.start();
 			batches.add(newBatch);
 			newBatch.addSprite(sprite);
@@ -52,11 +53,32 @@ public class Renderer
 		}
 	}
 
+	public static void bindShader(Shader shader)
+	{
+		currentShader = shader;
+	}
+
+	public static Shader getCurrentShader()
+	{
+		return currentShader;
+	}
+
 	public void render()
 	{
+		currentShader.use();
 		for(RenderBatch batch : batches)
 		{
 			batch.render();
+		}
+	}
+
+	public void destroyGameObject(GameObject go)
+	{
+		if(go.getComponent(SpriteRenderer.class) == null) return;
+
+		for(RenderBatch batch : batches)
+		{
+			if(batch.destroyIfExists(go)) return;
 		}
 	}
 }

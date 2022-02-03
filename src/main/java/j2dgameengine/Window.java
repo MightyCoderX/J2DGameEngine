@@ -2,60 +2,65 @@ package j2dgameengine;
 
 import j2dgameengine.listeners.KeyListener;
 import j2dgameengine.listeners.MouseListener;
-import j2dgameengine.renderer.DebugDraw;
-import scenes.LevelEditorScene;
-import scenes.LevelScene;
+import j2dgameengine.observers.EventSystem;
+import j2dgameengine.observers.Observer;
+import j2dgameengine.observers.events.Event;
+import j2dgameengine.observers.events.EventType;
+import j2dgameengine.renderer.*;
+import j2dgameengine.util.AssetPool;
+import scenes.LevelEditorSceneInitializer;
 import j2dgameengine.util.Time;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
+import scenes.SceneInitializer;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
-public class Window
+public class Window implements Observer
 {
 	private int width, height;
 	private String title;
 
 	private static Window window;
-	private static ImGuiLayer imGuiLayer;
+	private ImGuiLayer imGuiLayer;
+	private Framebuffer framebuffer;
+	private PickingTexture pickingTexture;
+	private boolean runtimePlaying;
 
 	private long glfwWindow;
 
 	private static Scene currentScene;
 
-	public float r, g, b, a;
 
 	private Window()
 	{
 		this.width = 720;
 		this.height = 360;
-		this.title = "Mario";
-		r = g = b = 1;
-		a = 1;
+		this.title = "J2DGameEngine";
+		this.runtimePlaying = false;
+
+		EventSystem.addObserver(this);
 	}
 
-	public static void changeScene(int newScene)
+	public static void changeScene(SceneInitializer sceneInitializer)
 	{
-		switch (newScene)
+		if(currentScene != null)
 		{
-			case 0 -> currentScene = new LevelEditorScene();
-			case 1 -> currentScene = new LevelScene();
-			default ->
-			{
-				assert false : "Unknown scene '" + newScene + "'";
-			}
+			currentScene.destroy();
 		}
 
+		getImGuiLayer().getPropertiesWindow().setActiveGameObject(null);
+		currentScene = new Scene(sceneInitializer);
 		currentScene.load();
 		currentScene.init();
 		currentScene.start();
 	}
 
-	public static Scene getCurrentScene()
+	public static Scene getScene()
 	{
 		return currentScene;
 	}
@@ -138,10 +143,14 @@ public class Window
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
-		imGuiLayer = new ImGuiLayer(glfwWindow);
+		this.framebuffer = new Framebuffer(1366, 768);
+		this.pickingTexture = new PickingTexture(1366, 768);
+		glViewport(0, 0, 1366, 768);
+
+		imGuiLayer = new ImGuiLayer(glfwWindow, pickingTexture);
 		imGuiLayer.init();
 
-		changeScene(0);
+		changeScene(new LevelEditorSceneInitializer());
 	}
 
 	public void loop()
@@ -150,30 +159,59 @@ public class Window
 		float endTime;
 		float dt = -1.0f;
 
+		Shader defaultShader = AssetPool.getShader("assets/shaders/default.glsl");
+		Shader pickingShader = AssetPool.getShader("assets/shaders/pickingShader.glsl");
+
 		while(!glfwWindowShouldClose(glfwWindow))
 		{
 			// Poll events
 			glfwPollEvents();
 
+			// Render pass 1. Render to picking texture
+			glDisable(GL_BLEND);
+			pickingTexture.enableWriting();
+			glViewport(0, 0, 1366, 768);
+			glClearColor(0, 0, 0, 0);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+			Renderer.bindShader(pickingShader);
+			currentScene.render();
+
+			pickingTexture.disableWriting();
+			glEnable(GL_BLEND);
+
+			// Render pass 2. Render actual game
 			DebugDraw.beginFrame();
 
-			glClearColor(r, g, b, a);
+			framebuffer.bind();
+			glClearColor(1, 1, 1, 1);
 			glClear(GL_COLOR_BUFFER_BIT);
 
 			if(dt >= 0)
 			{
-				currentScene.update(dt);
 				DebugDraw.draw();
+				Renderer.bindShader(defaultShader);
+				if(runtimePlaying)
+				{
+					currentScene.update(dt);
+				}
+				else
+				{
+					currentScene.editorUpdate(dt);
+				}
+				currentScene.render();
 			}
+			framebuffer.unbind();
 
 			imGuiLayer.update(dt, currentScene);
 			glfwSwapBuffers(glfwWindow);
+
+			MouseListener.endFrame();
 
 			endTime = Time.getTime();
 			dt = endTime - beginTime;
 			beginTime = endTime;
 		}
-		currentScene.saveExit();
 	}
 
 	public static void setWidth(int width)
@@ -203,5 +241,41 @@ public class Window
 	public static int getHeight()
 	{
 		return getWindowSize()[1];
+	}
+
+	public static Framebuffer getFramebuffer()
+	{
+		return getInstance().framebuffer;
+	}
+
+	public static float getTargetAspectRatio()
+	{
+		return 16.0f / 9.0f;
+	}
+
+	public static ImGuiLayer getImGuiLayer()
+	{
+		return getInstance().imGuiLayer;
+	}
+
+	@Override
+	public void onNotify(GameObject gameObject, Event event)
+	{
+		switch (event.type)
+		{
+			case GAME_ENGINE_START_PLAY ->
+			{
+				this.runtimePlaying = true;
+				currentScene.save();
+				Window.changeScene(new LevelEditorSceneInitializer());
+			}
+			case GAME_ENGINE_STOP_PLAY ->
+			{
+				this.runtimePlaying = false;
+				Window.changeScene(new LevelEditorSceneInitializer());
+			}
+			case LOAD_LEVEL -> Window.changeScene(new LevelEditorSceneInitializer());
+			case SAVE_LEVEL -> currentScene.save();
+		}
 	}
 }

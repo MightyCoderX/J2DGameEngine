@@ -7,6 +7,7 @@ public class KeyListener
 {
 	private static KeyListener instance;
 	private boolean[] keyPressed = new boolean[350];
+	private boolean[] keyBeginPress = new boolean[350];
 
 	private KeyListener() {}
 
@@ -22,10 +23,12 @@ public class KeyListener
 		if(action == GLFW_PRESS)
 		{
 			getInstance().keyPressed[key] = true;
+			getInstance().keyBeginPress[key] = true;
 		}
 		else if(action == GLFW_RELEASE)
 		{
 			getInstance().keyPressed[key] = false;
+			getInstance().keyBeginPress[key] = false;
 		}
 	}
 
@@ -37,5 +40,16 @@ public class KeyListener
 		}
 
 		return getInstance().keyPressed[keyCode];
+	}
+
+	public static boolean keyBeginPress(int keyCode)
+	{
+		boolean result = getInstance().keyBeginPress[keyCode];
+		if(result)
+		{
+			getInstance().keyBeginPress[keyCode] = false;
+		}
+
+		return result;
 	}
 }
